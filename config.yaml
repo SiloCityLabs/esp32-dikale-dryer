@@ -1,0 +1,292 @@
+# Description: ESPHome configuration for the ESP32-Dikale-Dryer Custom PCB
+# https://github.com/SiloCityLabs/esp32-dikale-dryer
+
+
+# These substitutions allow the end user to override certain values
+substitutions:
+  name: "esp32-dikale-dryer"
+  friendly_name: "Filament Dryer"
+
+  # If you deactivate this it also deactivates the improv_serial option. See here for more info: https://esphome.io/components/improv_serial
+  log_level: "INFO"    
+
+esphome:
+  name: "${name}"
+  friendly_name: "${friendly_name}"
+  name_add_mac_suffix: true
+
+  # This will allow for (future) project identification,
+  # configuration and updates.
+  project:
+    name: silocitylabs.esp32-dikale-dryer
+    version: "0.1.0"
+
+esp32:
+  board: esp32-c3-devkitm-1
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+  level: "${log_level}"
+
+# API is a requirement of the dashboard import.
+api:
+
+# OTA is required for Over-the-Air updating
+ota:
+  platform: esphome
+
+# This should point to the public location of this yaml file.
+dashboard_import:
+  package_import_url: github://SiloCityLabs/esp32-dikale-dryer/config.yaml@main
+  import_full_config: true
+
+wifi:
+  ap:
+
+# In combination with the `ap` this allows the user
+# to provision wifi credentials to the device.
+captive_portal:
+
+# Sets up Bluetooth LE (Only on ESP32) to allow the user
+# to provision wifi credentials to the device.
+esp32_improv:
+  authorizer: none
+
+# Sets up the improv via serial client for Wi-Fi provisioning
+improv_serial:
+    
+i2c:
+  sda: GPIO6
+  scl: GPIO7
+  scan: True
+
+globals:
+  - id: dryer_mode
+    type: int
+    restore_value: yes
+    initial_value: '0'  # Default to off
+
+  - id: target_temp
+    type: float
+    restore_value: yes
+    initial_value: '0.0'  # Default to off
+
+  - id: target_humidity
+    type: float
+    restore_value: yes
+    initial_value: '20.0' # Default to off
+
+  - id: drying_time
+    type: int
+    restore_value: yes
+    initial_value: '0'  # Default drying time in hours
+
+# Breakdown of Limits:
+#     ABS Softening Point: ~105°C, but it can warp as low as 80°C.
+#     AMS1117 Regulator: Max 125°C, but efficiency drops with temp.
+#     60/40 Solder: Melts at 183°C, but joints degrade above 100°C.
+#     Ceramic Capacitors: Typically rated 125°C, safe below 85°C.
+#     SSD1306 Display: Usually 70°C max before contrast issues.
+#     Relay: Typically 85°C–105°C, depends on the model.
+#     PCB Components: General safe limit is 80°C for longevity.
+
+# Safe Operating Temp:
+#     Recommended Max: 60°C–65°C
+#     Absolute Max Before Risk: 80°C
+#     Ideal for Filament Drying: 45°C–55°C (works well for PLA, PETG, and even ABS drying).
+
+# Modes: Idle, PLA, PETG, ABS, Custom
+select:
+  - platform: template
+    name: "Dryer Mode"
+    id: dryer_mode_select
+    options:
+      - "Idle"
+      - "PLA"
+      - "PETG"
+      - "ABS"
+      - "Custom"
+    restore_value: yes
+    initial_option: "Idle"
+    set_action:
+      - lambda: |-
+          if (x == "Idle") {
+            id(target_temp) = 0.0;
+            id(target_humidity) = 20.0;
+            id(drying_time) = 0;
+          } else if (x == "PLA") {
+            id(target_temp) = 45.0;
+            id(target_humidity) = 20.0;
+            id(drying_time) = 4;
+          } else if (x == "PETG") {
+            id(target_temp) = 60.0;
+            id(target_humidity) = 20.0;
+            id(drying_time) = 4;
+          } else if (x == "ABS") {
+            id(target_temp) = 65.0;
+            id(target_humidity) = 20.0;
+            id(drying_time) = 4;
+          }
+          id(dryer_mode_select).publish_state(x);
+
+sensor:
+  # - platform: ntc
+  #   sensor: temp_resistance
+  #   calibration:
+  #     - 39kOhm -> 0°C   # Adjusted slightly from 34.82kΩ
+  #     - 9.53kOhm -> 25.3°C  # Your actual measurement
+  #     - 3.8kOhm -> 50°C  # Adjusted from 3.87kΩ
+  #   name: "Temperature"
+  #   id: temp_sensor
+  #   unit_of_measurement: "°C"
+  #   accuracy_decimals: 1
+
+  # - platform: resistance
+  #   id: temp_resistance
+  #   sensor: adc_temp
+  #   configuration: DOWNSTREAM
+  #   resistor: 50kOhm  # Confirmed correct
+
+  # - platform: adc
+  #   pin: GPIO4
+  #   id: adc_temp
+  #   attenuation: 12db
+  #   update_interval: 2s
+  #   name: "Raw ADC Voltage"
+
+  - platform: aht10
+    variant: AHT20
+    temperature:
+      id: temp_sensor
+      name: "Temperature"
+    humidity:
+      id: humidity_sensor
+      name: "Humidity"
+    address: 0x38
+    update_interval: 2s
+
+
+display:
+  - platform: ssd1306_i2c
+    model: "SSD1306 128x32"
+    address: 0x3C
+    lambda: |-
+      it.printf(0, 0, id(myfont), "%.1f °C,   ~%.1f %%", id(temp_sensor).state, id(humidity_sensor).state);
+      it.printf(0, 16, id(myfont), "Mode: %s     Time: %d hrs", id(dryer_mode_select).state.c_str(), id(drying_time));
+
+
+binary_sensor:
+  - platform: gpio
+    pin: GPIO9
+    name: "Power Button"
+    on_press:
+      then:
+        - lambda: |-
+            int new_mode = (id(dryer_mode) + 1) % 5;
+            if (new_mode == 0) id(dryer_mode_select).publish_state("Idle");
+            else if (new_mode == 1) id(dryer_mode_select).publish_state("PLA");
+            else if (new_mode == 2) id(dryer_mode_select).publish_state("PETG");
+            else if (new_mode == 3) id(dryer_mode_select).publish_state("ABS");
+            else id(dryer_mode_select).publish_state("Custom");
+    # on_press:
+    #   then:
+    #     - switch.toggle: heater_relay
+
+  - platform: gpio
+    pin: GPIO10
+    name: "Mode Button"
+    on_press:
+      then:
+        - lambda: |-
+            int new_mode = (id(dryer_mode) + 1) % 4;
+            if (new_mode == 0) id(dryer_mode_select).publish_state("Idle");
+            else if (new_mode == 1) id(dryer_mode_select).publish_state("PLA");
+            else if (new_mode == 2) id(dryer_mode_select).publish_state("PETG");
+            else if (new_mode == 3) id(dryer_mode_select).publish_state("ABS");
+            else id(dryer_mode_select).publish_state("Custom");
+
+  - platform: gpio
+    pin: GPIO20
+    name: "Up Button"
+    on_press:
+      then:
+        - lambda: |-
+            id(drying_time) += 1.0;
+
+  - platform: gpio
+    pin: GPIO8
+    name: "Down Button"
+    on_press:
+      then:
+        - lambda: |-
+            id(drying_time) -= 1.0;
+
+
+switch:
+  - platform: gpio
+    pin:
+      number: GPIO5
+      mode: 
+        output: true
+        open_drain: false
+        pullup: false
+      inverted: false
+    id: heater_relay
+    name: "Heating Element"
+    restore_mode: ALWAYS_OFF
+
+  - platform: gpio
+    pin:
+      number: GPIO2
+      mode: 
+        output: true
+        open_drain: false
+        pullup: false
+      inverted: false
+    id: fan_switch
+    name: "Fan"
+    restore_mode: ALWAYS_OFF
+
+
+# output:
+#   - platform: ledc
+#     pin: GPIO3
+#     id: fan2_output
+#     frequency: 1000 Hz
+
+# light:
+#   - platform: monochromatic
+#     output: fan2_output
+#     name: "Fan 2 (PWM)"
+#     id: fan2
+#     internal: true
+
+font:
+  - file: "arial.ttf"
+    id: myfont
+    size: 16
+
+# interval:
+#   - interval: 1s
+#     then:
+#       - if:
+#           condition:
+#             lambda: 'return id(temp_aht).state < id(target_temp);'
+#           then:
+#             - switch.turn_on: heater_relay
+#           else:
+#             - switch.turn_off: heater_relay
+
+      # - light.turn_on:
+      #     id: fan1
+      #     brightness: !lambda |-
+      #       if (id(dryer_mode) == 3) return 0.5; // Custom mode - set manually
+      #       return id(target_temp) / 70.0;
+
+      # - light.turn_on:
+      #     id: fan2
+      #     brightness: !lambda |-
+      #       if (id(dryer_mode) == 3) return 0.5;
+      #       return id(target_temp) / 70.0;
