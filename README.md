@@ -61,3 +61,7 @@ Chamber temps for materials
 | PETG | 60 | 20 | 4h |
 | ABS | 65 | 20 | 4h |
 | Custom |  |  |  |
+
+## License
+
+This project is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License - see the [LICENSE.md](LICENSE.md) file for details
