@@ -16,16 +16,16 @@ Both fans should never be used at once. The additional fan header is meant to se
 - [x] AHT21 Reading
 - [x] Display Output
 - [x] Button Controls
-- [ ] Get "Made for ESPHOME" approved
-- [ ] Add Images to Repo
-- [ ] Work on Custom Mode
-- [ ] Heating Element Control
-- [ ] NTC Calibration
-- [ ] NTC/AHT Toggle or substitution
-- [ ] Test PWM Fan Mode, seperate header
-- [ ] Test Fan Frequency Switching for Speed control of regular DC Fan
-- [ ] Github Pipeline
-- [ ] OSHWA Certification
+- [ ] Get "Made for ESPHOME" approved [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/1)
+- [ ] Add Images to Repo [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/2)
+- [ ] Work on Custom Mode [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/3)
+- [ ] Heating Element Control [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/4)
+- [ ] NTC Calibration [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/5)
+- [ ] NTC/AHT Toggle or substitution [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/6)
+- [ ] Test PWM Fan Mode, seperate header [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/7)
+- [ ] Test Fan Frequency Switching for Speed control of regular DC Fan [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/8)
+- [ ] Github Pipeline [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/9)
+- [ ] OSHWA Certification [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/10)
 
 ## Pins
 
