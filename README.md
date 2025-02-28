@@ -62,6 +62,12 @@ Chamber temps for materials
 | ABS | 65 | 20 | 4h |
 | Custom |  |  |  |
 
+## Images
+
+![PCB Front](https://shop.silocitylabs.com/cdn/shop/files/dikale-esp32-pcb-front.webp "PCB Front")
+![PCB Back](https://shop.silocitylabs.com/cdn/shop/files/dikale-esp32-pcb-back.webp "PCB Back")
+![Compatible Dryer](https://shop.silocitylabs.com/cdn/shop/files/compatible-dikale-unit.jpg "Compatible Dryer")
+
 ## License
 
 This project is licensed under the Creative Commons Attribution-ShareAlike 4.0 International License - see the [LICENSE.md](LICENSE.md) file for details
