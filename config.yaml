@@ -19,7 +19,7 @@ esphome:
   # configuration and updates.
   project:
     name: silocitylabs.esp32-dikale-dryer
-    version: "0.1.0"
+    version: "0.1.1"
 
 esp32:
   board: esp32-c3-devkitm-1
@@ -56,32 +56,48 @@ esp32_improv:
 
 # Sets up the improv via serial client for Wi-Fi provisioning
 improv_serial:
-    
+
 i2c:
   sda: GPIO6
   scl: GPIO7
   scan: True
+  frequency: 400kHz
 
 globals:
   - id: dryer_mode
     type: int
-    restore_value: yes
+    restore_value: no
     initial_value: '0'  # Default to off
 
+  # This is 1 for target_selector
+  - id: target_time
+    type: int
+    restore_value: yes
+    initial_value: '0'  # Default drying time in minutes
+
+  # This is 2 for target_selector
   - id: target_temp
     type: float
     restore_value: yes
     initial_value: '0.0'  # Default to off
 
+  # This is 3 for target_selector
   - id: target_humidity
     type: float
     restore_value: yes
     initial_value: '20.0' # Default to off
 
-  - id: drying_time
+  # Used to select between settings temp, humidity, and time in custom mode
+  # 0 = no selection to be made, normal display but in custom
+  - id: target_selector
     type: int
-    restore_value: yes
-    initial_value: '0'  # Default drying time in hours
+    restore_value: no
+    initial_value: '0'  # Default to off
+
+  - id: blink_state
+    type: bool
+    restore_value: no
+    initial_value: 'true'
 
 # Breakdown of Limits:
 #     ABS Softening Point: ~105°C, but it can warp as low as 80°C.
@@ -108,54 +124,54 @@ select:
       - "PETG"
       - "ABS"
       - "Custom"
-    restore_value: yes
+    restore_value: no
     initial_option: "Idle"
     set_action:
       - lambda: |-
+          ESP_LOGI("dryer_mode_select", "Selected mode: %s", x.c_str());
+          id(dryer_mode_select).publish_state(x);
           if (x == "Idle") {
+            id(dryer_mode) = 0;
             id(target_temp) = 0.0;
             id(target_humidity) = 20.0;
-            id(drying_time) = 0;
+            id(target_time) = 0;
+            id(target_selector) = 0;
+            id(heater_switch).turn_off();  // Turn off heater
+            id(fan_switch).turn_off();     // Turn off fan
           } else if (x == "PLA") {
+            id(dryer_mode) = 1;
             id(target_temp) = 45.0;
             id(target_humidity) = 20.0;
-            id(drying_time) = 4;
+            id(target_time) = 240;
+            id(target_selector) = 0;
           } else if (x == "PETG") {
+            id(dryer_mode) = 2;
             id(target_temp) = 60.0;
             id(target_humidity) = 20.0;
-            id(drying_time) = 4;
+            id(target_time) = 240;
+            id(target_selector) = 0;
           } else if (x == "ABS") {
+            id(dryer_mode) = 3;
             id(target_temp) = 65.0;
             id(target_humidity) = 20.0;
-            id(drying_time) = 4;
+            id(target_time) = 240;
+            id(target_selector) = 0;
+          }else if (x == "Custom") {
+            id(dryer_mode) = 4;
+            id(target_selector) = 0;
+          }else{
+            id(dryer_mode) = 0;
+            id(target_temp) = 0.0;
+            id(target_humidity) = 20.0;
+            id(target_time) = 0;
+            id(target_selector) = 0;
+            id(heater_switch).turn_off();  // Turn off heater
+            id(fan_switch).turn_off();     // Turn off fan
           }
           id(dryer_mode_select).publish_state(x);
+          id(dryer_mode_select).update();
 
 sensor:
-  # - platform: ntc
-  #   sensor: temp_resistance
-  #   calibration:
-  #     - 39kOhm -> 0°C   # Adjusted slightly from 34.82kΩ
-  #     - 9.53kOhm -> 25.3°C  # Your actual measurement
-  #     - 3.8kOhm -> 50°C  # Adjusted from 3.87kΩ
-  #   name: "Temperature"
-  #   id: temp_sensor
-  #   unit_of_measurement: "°C"
-  #   accuracy_decimals: 1
-
-  # - platform: resistance
-  #   id: temp_resistance
-  #   sensor: adc_temp
-  #   configuration: DOWNSTREAM
-  #   resistor: 50kOhm  # Confirmed correct
-
-  # - platform: adc
-  #   pin: GPIO4
-  #   id: adc_temp
-  #   attenuation: 12db
-  #   update_interval: 2s
-  #   name: "Raw ADC Voltage"
-
   - platform: aht10
     variant: AHT20
     temperature:
@@ -165,17 +181,32 @@ sensor:
       id: humidity_sensor
       name: "Humidity"
     address: 0x38
-    update_interval: 2s
+    update_interval: 5s
 
 
 display:
   - platform: ssd1306_i2c
+    id: display_1306
     model: "SSD1306 128x32"
     address: 0x3C
     lambda: |-
-      it.printf(0, 0, id(myfont), "%.1f °C,   ~%.1f %%", id(temp_sensor).state, id(humidity_sensor).state);
-      it.printf(0, 16, id(myfont), "Mode: %s     Time: %d hrs", id(dryer_mode_select).state.c_str(), id(drying_time));
+      it.printf(0, 0, id(myfont), "%.1f °C, ~%.1f %%", id(temp_sensor).state, id(humidity_sensor).state);
 
+      // Only show mode & time if no selection is active
+      if (id(target_selector) == 0) {
+        it.printf(0, 16, id(myfont), "%s, Time: %d hrs", id(dryer_mode_select).state.c_str(), id(target_time) / 60);
+      }
+
+      // Blinking effect only if selecting
+      if (id(target_selector) != 0 && id(blink_state)) { 
+        if (id(target_selector) == 1) {
+          it.printf(0, 16, id(myfont), "Temp: %.1f °C", id(target_temp));
+        } else if (id(target_selector) == 2) {
+          it.printf(0, 16, id(myfont), "Time: %d hrs", id(target_time) / 60);
+        } else if (id(target_selector) == 3) {
+          it.printf(0, 16, id(myfont), "Humidity: %.1f %%", id(target_humidity));
+        }
+      }
 
 binary_sensor:
   - platform: gpio
@@ -184,28 +215,33 @@ binary_sensor:
     on_press:
       then:
         - lambda: |-
-            int new_mode = (id(dryer_mode) + 1) % 5;
-            if (new_mode == 0) id(dryer_mode_select).publish_state("Idle");
-            else if (new_mode == 1) id(dryer_mode_select).publish_state("PLA");
-            else if (new_mode == 2) id(dryer_mode_select).publish_state("PETG");
-            else if (new_mode == 3) id(dryer_mode_select).publish_state("ABS");
-            else id(dryer_mode_select).publish_state("Custom");
-    # on_press:
-    #   then:
-    #     - switch.toggle: heater_relay
+            id(dryer_mode) = (id(dryer_mode) + 1) % 5;
+            if (id(dryer_mode) == 0) {
+              id(dryer_mode_select).publish_state("Idle");
+            } else if (id(dryer_mode) == 1) {
+              id(dryer_mode_select).publish_state("PLA");
+            } else if (id(dryer_mode) == 2) {
+              id(dryer_mode_select).publish_state("PETG");
+            } else if (id(dryer_mode) == 3) {
+              id(dryer_mode_select).publish_state("ABS");
+            } else {
+              id(dryer_mode_select).publish_state("Custom");
+            }
 
+    # on_hold:
+    #   then:
+    #     - lambda: |-
+    #         id(dryer_mode_select).publish_state("Idle");
+
+  # Set the mode to custom and toggle between temp, humidity, and time
   - platform: gpio
     pin: GPIO10
     name: "Mode Button"
     on_press:
       then:
         - lambda: |-
-            int new_mode = (id(dryer_mode) + 1) % 4;
-            if (new_mode == 0) id(dryer_mode_select).publish_state("Idle");
-            else if (new_mode == 1) id(dryer_mode_select).publish_state("PLA");
-            else if (new_mode == 2) id(dryer_mode_select).publish_state("PETG");
-            else if (new_mode == 3) id(dryer_mode_select).publish_state("ABS");
-            else id(dryer_mode_select).publish_state("Custom");
+            id(dryer_mode_select).publish_state("Custom");
+            id(target_selector) = (id(target_selector) + 1) % 3;
 
   - platform: gpio
     pin: GPIO20
@@ -213,7 +249,14 @@ binary_sensor:
     on_press:
       then:
         - lambda: |-
-            id(drying_time) += 1.0;
+            id(dryer_mode_select).publish_state("Custom");
+            if (id(target_selector) == 0 || id(target_selector) == 1) id(target_time) += 60;
+            else if (id(target_selector) == 2) id(target_temp) += 1.0;
+            else id(target_humidity) += 1.0;
+
+            if (id(target_time) < 0) id(target_time) = 0;
+            if (id(target_temp) < 0.0) id(target_temp) = 0.0;
+            if (id(target_humidity) < 0.0) id(target_humidity) = 0.0;
 
   - platform: gpio
     pin: GPIO8
@@ -221,8 +264,14 @@ binary_sensor:
     on_press:
       then:
         - lambda: |-
-            id(drying_time) -= 1.0;
+            id(dryer_mode_select).publish_state("Custom");
+            if (id(target_selector) == 0 || id(target_selector) == 1) id(target_time) -= 60;
+            else if (id(target_selector) == 2) id(target_temp) -= 1.0;
+            else id(target_humidity) -= 1.0;
 
+            if (id(target_time) < 0) id(target_time) = 0;
+            if (id(target_temp) < 0.0) id(target_temp) = 0.0;
+            if (id(target_humidity) < 0.0) id(target_humidity) = 0.0;
 
 switch:
   - platform: gpio
@@ -233,7 +282,7 @@ switch:
         open_drain: false
         pullup: false
       inverted: false
-    id: heater_relay
+    id: heater_switch
     name: "Heating Element"
     restore_mode: ALWAYS_OFF
 
@@ -246,47 +295,55 @@ switch:
         pullup: false
       inverted: false
     id: fan_switch
-    name: "Fan"
+    name: "DC Fan"
     restore_mode: ALWAYS_OFF
 
-
-# output:
-#   - platform: ledc
-#     pin: GPIO3
-#     id: fan2_output
-#     frequency: 1000 Hz
-
-# light:
-#   - platform: monochromatic
-#     output: fan2_output
-#     name: "Fan 2 (PWM)"
-#     id: fan2
-#     internal: true
-
 font:
-  - file: "arial.ttf"
+  - file: "gfonts://Roboto"
     id: myfont
     size: 16
 
-# interval:
-#   - interval: 1s
-#     then:
-#       - if:
-#           condition:
-#             lambda: 'return id(temp_aht).state < id(target_temp);'
-#           then:
-#             - switch.turn_on: heater_relay
-#           else:
-#             - switch.turn_off: heater_relay
+# This section keeps track of the runtime of the dryer
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(target_time) > 0;'
+          then:
+            - lambda: 'id(target_time) -= 1;'
+        # If timer reaches 0, switch to maintenance mode
+      - if:
+          condition:
+            lambda: 'return id(target_time) <= 0;'
+          then:
+            - switch.turn_off: heater_switch
+            - switch.turn_off: fan_switch
 
-      # - light.turn_on:
-      #     id: fan1
-      #     brightness: !lambda |-
-      #       if (id(dryer_mode) == 3) return 0.5; // Custom mode - set manually
-      #       return id(target_temp) / 70.0;
+# The way this works
+# - The heating element turns on when the temp is below the target temp 
+# - The heating element turns off when the temp is above the target temp by 0.5°C
+# - The heating element remains off if the humidity is below the target humidity and only if the target time is 0
+# - The fan turns on when the heating element is on
+# - The fan turns off when the heating element is off
 
-      # - light.turn_on:
-      #     id: fan2
-      #     brightness: !lambda |-
-      #       if (id(dryer_mode) == 3) return 0.5;
-      #       return id(target_temp) / 70.0;
+  - interval: 5s
+    then:
+      - if:
+          condition:
+            lambda: 'return id(target_time) > 0 || id(temp_sensor).state < id(target_temp);'
+          then:
+            - switch.turn_on: heater_switch
+            - switch.turn_on: fan_switch
+          else:
+            - switch.turn_off: heater_switch
+            - switch.turn_off: fan_switch
+
+  - interval: 2s
+    then:
+      - component.update: display_1306
+
+  - interval: 500ms  # Toggle every 500ms
+    then:
+      - lambda: |-
+          id(blink_state) = !id(blink_state);
