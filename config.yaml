@@ -19,7 +19,7 @@ esphome:
   # configuration and updates.
   project:
     name: silocitylabs.esp32-dikale-dryer
-    version: "0.1.1"
+    version: "1.0.0"
 
 esp32:
   board: esp32-c3-devkitm-1
