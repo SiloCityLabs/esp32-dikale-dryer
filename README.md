@@ -16,8 +16,8 @@ Both fans should never be used at once. The additional fan header is meant to se
 - [x] AHT21 Reading
 - [x] Display Output
 - [x] Button Controls
+- [x] Add Images to Repo [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/2)
 - [ ] Get "Made for ESPHOME" approved [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/1)
-- [ ] Add Images to Repo [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/2)
 - [ ] Work on Custom Mode [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/3)
 - [ ] Heating Element Control [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/4)
 - [ ] NTC Calibration [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/5)
