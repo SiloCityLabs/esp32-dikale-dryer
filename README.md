@@ -17,9 +17,9 @@ Both fans should never be used at once. The additional fan header is meant to se
 - [x] Display Output
 - [x] Button Controls
 - [x] Add Images to Repo [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/2)
-- [ ] Get "Made for ESPHOME" approved [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/1)
-- [ ] Work on Custom Mode [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/3)
-- [ ] Heating Element Control [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/4)
+- [x] Get "Made for ESPHOME" approved [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/1)
+- [x] Work on Custom Mode [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/3)
+- [x] Heating Element Control [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/4)
 - [ ] NTC Calibration [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/5)
 - [ ] NTC/AHT Toggle or substitution [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/6)
 - [ ] Test PWM Fan Mode, seperate header [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/7)
