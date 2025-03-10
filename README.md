@@ -7,6 +7,7 @@ The esp32 was chosen over an esp8266 mainly just to keep my designs similar. If 
 Both fans should never be used at once. The additional fan header is meant to server as a replacement for the original 12v fan. The 4 pin fan header is meant to be used with a pwm fan.
 
 [Purchase PCB Here](https://shop.silocitylabs.com/products/3dgenius-dikale-firos-smart-pcb-esp32-conversion-preorder)
+[Install Video](https://www.youtube.com/watch?v=-EcRqxpuliQ)
 
 ## TODO:
 
