@@ -27,16 +27,23 @@ jobs:
         with:
           name: firmware-binaries
           path: firmwares/
+          retention-days: 7  # Optional: Keeps artifacts for 7 days
 
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Download firmware artifacts
         uses: actions/download-artifact@v3
         with:
           name: firmware-binaries
           path: firmwares/
+
+      - name: List downloaded files (debugging)
+        run: ls -lh firmwares/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
