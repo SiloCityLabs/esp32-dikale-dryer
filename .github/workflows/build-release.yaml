@@ -19,7 +19,7 @@ jobs:
       - name: Build firmware
         run: make build
 
-      - name: Create output directory
+      - name: Create output directory and move firmware
         run: mkdir -p firmwares && mv firmware.bin firmwares/
 
       - name: Upload firmware artifacts
@@ -42,10 +42,14 @@ jobs:
           name: firmware-binaries
           path: firmwares/
 
-      - name: List downloaded files (debugging)
+      - name: Verify downloaded files
         run: ls -lh firmwares/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: firmwares/*
+          tag_name: latest
+          release_name: Latest Firmware
+          draft: false
+          prerelease: false
