@@ -1,6 +1,9 @@
 .PHONY: help
 SHELL := /bin/bash
- 
+
+CONFIG_PATH = config.yaml
+PROJECT_NAME = $(shell grep -oP '(?<=name: ")[^"]+' $(CONFIG_PATH))
+
 # The default target will display help
 help:
 	@echo "Available targets:"
@@ -16,13 +19,13 @@ setup: ## Setup the environment
 
 config: ## Generate the configuration
 	source .venv/bin/activate && \
-	esphome config config.yaml
+	esphome config $(CONFIG_PATH)
 
 build: ## Build the firmware
 	source .venv/bin/activate && \
-	esphome compile config.yaml && \
-	cp .esphome/build/filament-dryer/.pioenvs/filament-dryer/firmware.factory.bin firmware.bin
+	esphome compile $(CONFIG_PATH) && \
+	cp .esphome/build/$(PROJECT_NAME)/.pioenvs/$(PROJECT_NAME)/firmware.factory.bin firmware.bin
 
 flash: ## Flash the firmware to test device
 	source .venv/bin/activate && \
-	esphome upload config.yaml --device /dev/ttyACM0
+	esphome upload $(CONFIG_PATH) --device /dev/ttyACM0
