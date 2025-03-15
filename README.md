@@ -25,7 +25,7 @@ Both fans should never be used at once. The additional fan header is meant to se
 - [ ] NTC/AHT Toggle or substitution [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/6)
 - [ ] Test PWM Fan Mode, seperate header [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/7)
 - [ ] Test Fan Frequency Switching for Speed control of regular DC Fan [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/8)
-- [ ] Github Pipeline [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/9)
+- [x] Github Pipeline [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/9)
 - [ ] OSHWA Certification [Issue](https://github.com/SiloCityLabs/esp32-dikale-dryer/issues/10)
 
 ## Pins
