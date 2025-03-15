@@ -2,7 +2,6 @@
 SHELL := /bin/bash
 
 CONFIG_PATH = config.yaml
-BUILD_PATH = .esphome/build/firmware-build  # Set a fixed build path
 
 # The default target will display help
 help:
@@ -23,8 +22,12 @@ config: ## Generate the configuration
 
 build: ## Build the firmware
 	source .venv/bin/activate && \
-	esphome compile $(CONFIG_PATH) --build-path $(BUILD_PATH) && \
-	cp $(BUILD_PATH)/.pioenvs/firmware-build/firmware.factory.bin firmware.bin
+	esphome compile $(CONFIG_PATH)
+
+	# Dynamically get the correct build path from ESPHome
+	BUILD_DIR=$$(find .esphome/build/ -maxdepth 1 -type d | grep -v "^.esphome/build/$$" | head -n 1); \
+	echo "Detected build directory: $$BUILD_DIR"; \
+	cp $$BUILD_DIR/.pioenvs/*/firmware.factory.bin firmware.bin
 
 flash: ## Flash the firmware to test device
 	source .venv/bin/activate && \
