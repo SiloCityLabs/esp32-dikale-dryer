@@ -2,7 +2,7 @@
 SHELL := /bin/bash
 
 CONFIG_PATH = config.yaml
-PROJECT_NAME = $(shell grep -oP '(?<=name: ")[^"]+' $(CONFIG_PATH))
+BUILD_PATH = .esphome/build/firmware-build  # Set a fixed build path
 
 # The default target will display help
 help:
@@ -23,8 +23,8 @@ config: ## Generate the configuration
 
 build: ## Build the firmware
 	source .venv/bin/activate && \
-	esphome compile $(CONFIG_PATH) && \
-	cp .esphome/build/$(PROJECT_NAME)/.pioenvs/$(PROJECT_NAME)/firmware.factory.bin firmware.bin
+	esphome compile $(CONFIG_PATH) --build-path $(BUILD_PATH) && \
+	cp $(BUILD_PATH)/.pioenvs/firmware-build/firmware.factory.bin firmware.bin
 
 flash: ## Flash the firmware to test device
 	source .venv/bin/activate && \
