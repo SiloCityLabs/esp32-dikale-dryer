@@ -35,7 +35,7 @@ api:
 
 # OTA is required for Over-the-Air updating
 ota:
-  id: dikale-ota
+  id: dikale_ota
   platform: esphome
 
 # This should point to the public location of this yaml file.
@@ -59,7 +59,7 @@ esp32_improv:
 improv_serial:
 
 i2c:
-  id: dikale-i2c
+  id: dikale_i2c
   sda: GPIO6
   scl: GPIO7
   scan: True
