@@ -19,7 +19,7 @@ esphome:
   # configuration and updates.
   project:
     name: silocitylabs.esp32-dikale-dryer
-    version: "1.1.0"
+    version: "1.2.0"
 
 esp32:
   board: esp32-c3-devkitm-1
@@ -148,6 +148,12 @@ select:
     set_action:
       - script.execute: handle_mode_change
 
+button:
+  - platform: restart
+    id: restart_button
+    icon: mdi:power-cycle
+    name: "ESP Reboot"
+
 sensor:
   - platform: aht10
     variant: AHT20
@@ -159,6 +165,11 @@ sensor:
       name: "Humidity"
     address: 0x38
     update_interval: 5s
+    
+  - platform: wifi_signal
+    id: esp_wifi_signal
+    name: "WiFi Signal"
+    update_interval: 60s
 
 display:
   - platform: ssd1306_i2c
@@ -179,7 +190,9 @@ display:
 
 binary_sensor:
   - platform: gpio
-    pin: GPIO9
+    pin: 
+      number: GPIO9
+      ignore_strapping_warning: true
     name: "Power Button"
     on_press:
       then:
@@ -235,7 +248,9 @@ binary_sensor:
         - script.execute: handle_mode_change
 
   - platform: gpio
-    pin: GPIO8
+    pin: 
+      number: GPIO8
+      ignore_strapping_warning: true
     name: "Down Button"
     on_press:
       then:
@@ -263,7 +278,9 @@ switch:
     name: "DC Fan"
     id: fan_switch
     restore_mode: ALWAYS_OFF
-    pin: GPIO2
+    pin: 
+      number: GPIO2
+      ignore_strapping_warning: true
 
 font:
   - file: "gfonts://Roboto"
