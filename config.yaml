@@ -77,6 +77,12 @@ globals:
     restore_value: no
     initial_value: 'true'
 
+  # Global string to safely hold the dryer mode state
+  - id: current_dryer_mode
+    type: std::string
+    restore_value: no
+    initial_value: '"Idle"'
+
 number:
   - platform: template
     name: "Temp Range Tolerance"
@@ -146,6 +152,8 @@ select:
     restore_value: no
     initial_option: "Idle"
     set_action:
+      - lambda: |-
+          id(current_dryer_mode) = x;
       - script.execute: handle_mode_change
 
 button:
@@ -181,7 +189,7 @@ display:
       float hours_left = id(target_time).state / 60.0;
       it.printf(0, 0, id(myfont), "T %.1f°C, H %.1f%%", id(temp_sensor).state, id(humidity_sensor).state);
       if (id(target_selector) == 0) {
-        it.printf(0, 16, id(myfont), "%s, %.1f hrs", id(dryer_mode_select).state.c_str(), hours_left);
+        it.printf(0, 16, id(myfont), "%s, %.1f hrs", id(current_dryer_mode).c_str(), hours_left);
       } else if (id(blink_state)) {
         if (id(target_selector) == 1) it.printf(0, 16, id(myfont), "Temp: %.1f °C", id(target_temp).state);
         else if (id(target_selector) == 2) it.printf(0, 16, id(myfont), "Time: %.1f hrs", hours_left);
@@ -197,7 +205,7 @@ binary_sensor:
     on_press:
       then:
         - lambda: |-
-            std::string current_mode = id(dryer_mode_select).state;
+            std::string current_mode = id(current_dryer_mode);
             std::string next_mode;
 
             if (current_mode == "Idle") next_mode = "PLA";
@@ -206,7 +214,10 @@ binary_sensor:
             else if (current_mode == "ABS") next_mode = "Custom";
             else next_mode = "Idle";  // Loops back to Idle
 
-            id(dryer_mode_select).publish_state(next_mode);
+            id(current_dryer_mode) = next_mode;
+            auto call = id(dryer_mode_select).make_call(); 
+            call.set_option(next_mode); 
+            call.perform();
         - script.execute: handle_mode_change
 
   - platform: gpio
@@ -216,7 +227,10 @@ binary_sensor:
       then:
         - lambda: |-
             // Ensure we are in "Custom" mode when adjusting settings
-            id(dryer_mode_select).publish_state("Custom");
+            id(current_dryer_mode) = "Custom";
+            auto call = id(dryer_mode_select).make_call(); 
+            call.set_option("Custom"); 
+            call.perform();
 
             // Move to the next setting mode in sequence
             if (id(target_selector) == 0) {
@@ -235,7 +249,10 @@ binary_sensor:
     on_press:
       then:
         - lambda: |-
-            id(dryer_mode_select).publish_state("Custom");
+            id(current_dryer_mode) = "Custom";
+            auto call = id(dryer_mode_select).make_call(); 
+            call.set_option("Custom"); 
+            call.perform();
 
             if (id(target_selector) == 1) { id(target_temp).state += 1.0; }
 
@@ -255,7 +272,10 @@ binary_sensor:
     on_press:
       then:
         - lambda: |-
-            id(dryer_mode_select).publish_state("Custom");
+            id(current_dryer_mode) = "Custom";
+            auto call = id(dryer_mode_select).make_call(); 
+            call.set_option("Custom"); 
+            call.perform();
 
             if (id(target_selector) == 1) { id(target_temp).state -= 1.0; }
 
@@ -292,7 +312,7 @@ script:
     mode: single
     then:
       - lambda: |-
-          auto mode = id(dryer_mode_select).state;
+          auto mode = id(current_dryer_mode);
           if (mode == "Idle") {
             id(heater_switch).turn_off();
             id(fan_switch).turn_off();
@@ -336,7 +356,7 @@ interval:
     then:
       - if:
           condition:
-            lambda: 'return id(dryer_mode_select).state != "Idle" && id(target_time).state > 0;'
+            lambda: 'return id(current_dryer_mode) != "Idle" && id(target_time).state > 0;'
           then:
             - if:
                 condition:
