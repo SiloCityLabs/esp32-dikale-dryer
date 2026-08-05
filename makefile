@@ -27,8 +27,17 @@ build: ## Build the firmware
 	# Dynamically get the correct build path from ESPHome
 	BUILD_DIR=$$(find .esphome/build/ -maxdepth 1 -type d | grep -v "^.esphome/build/$$" | head -n 1); \
 	echo "Detected build directory: $$BUILD_DIR"; \
-	cp $$BUILD_DIR/.pioenvs/*/firmware.factory.bin firmware.bin
+	cp $$BUILD_DIR/build/firmware.factory.bin firmware.bin
 
 flash: ## Flash the firmware to test device
 	source .venv/bin/activate && \
 	esphome upload $(CONFIG_PATH) --device /dev/ttyACM0
+
+clean: ## Clean the build directory
+	source .venv/bin/activate && \
+	esphome clean $(CONFIG_PATH) && \
+	rm -rf .esphome
+
+logs: ## Stream live serial logs from the device
+	source .venv/bin/activate && \
+	esphome logs $(CONFIG_PATH) --device /dev/ttyACM0
