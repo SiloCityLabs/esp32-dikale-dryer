@@ -8,7 +8,7 @@ substitutions:
   friendly_name: "Filament Dryer"
 
   # If you deactivate this it also deactivates the improv_serial option. See here for more info: https://esphome.io/components/improv_serial
-  log_level: "INFO"    
+  log_level: "INFO"
 
 esphome:
   name: "${name}"
@@ -173,7 +173,7 @@ sensor:
       name: "Humidity"
     address: 0x38
     update_interval: 5s
-    
+
   - platform: wifi_signal
     id: esp_wifi_signal
     name: "WiFi Signal"
@@ -198,7 +198,7 @@ display:
 
 binary_sensor:
   - platform: gpio
-    pin: 
+    pin:
       number: GPIO9
       ignore_strapping_warning: true
     name: "Power Button"
@@ -215,8 +215,8 @@ binary_sensor:
             else next_mode = "Idle";  // Loops back to Idle
 
             id(current_dryer_mode) = next_mode;
-            auto call = id(dryer_mode_select).make_call(); 
-            call.set_option(next_mode); 
+            auto call = id(dryer_mode_select).make_call();
+            call.set_option(next_mode);
             call.perform();
         - script.execute: handle_mode_change
 
@@ -228,8 +228,8 @@ binary_sensor:
         - lambda: |-
             // Ensure we are in "Custom" mode when adjusting settings
             id(current_dryer_mode) = "Custom";
-            auto call = id(dryer_mode_select).make_call(); 
-            call.set_option("Custom"); 
+            auto call = id(dryer_mode_select).make_call();
+            call.set_option("Custom");
             call.perform();
 
             // Move to the next setting mode in sequence
@@ -250,8 +250,8 @@ binary_sensor:
       then:
         - lambda: |-
             id(current_dryer_mode) = "Custom";
-            auto call = id(dryer_mode_select).make_call(); 
-            call.set_option("Custom"); 
+            auto call = id(dryer_mode_select).make_call();
+            call.set_option("Custom");
             call.perform();
 
             if (id(target_selector) == 1) { id(target_temp).state += 1.0; }
@@ -265,7 +265,7 @@ binary_sensor:
         - script.execute: handle_mode_change
 
   - platform: gpio
-    pin: 
+    pin:
       number: GPIO8
       ignore_strapping_warning: true
     name: "Down Button"
@@ -273,8 +273,8 @@ binary_sensor:
       then:
         - lambda: |-
             id(current_dryer_mode) = "Custom";
-            auto call = id(dryer_mode_select).make_call(); 
-            call.set_option("Custom"); 
+            auto call = id(dryer_mode_select).make_call();
+            call.set_option("Custom");
             call.perform();
 
             if (id(target_selector) == 1) { id(target_temp).state -= 1.0; }
@@ -298,7 +298,7 @@ switch:
     name: "DC Fan"
     id: fan_switch
     restore_mode: ALWAYS_OFF
-    pin: 
+    pin:
       number: GPIO2
       ignore_strapping_warning: true
 
