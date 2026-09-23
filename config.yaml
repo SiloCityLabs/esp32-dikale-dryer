@@ -22,9 +22,9 @@ esphome:
     version: "1.2.0"
 
 esp32:
-  board: esp32-c3-devkitm-1
+  board: seeed_xiao_esp32c3
   framework:
-    type: arduino
+    type: esp-idf #https://developers.esphome.io/blog/2025/06/18/sunsetting-support-for-idf-4x/
 
 # Enable logging
 logger:
@@ -181,7 +181,7 @@ display:
       float hours_left = id(target_time).state / 60.0;
       it.printf(0, 0, id(myfont), "T %.1f°C, H %.1f%%", id(temp_sensor).state, id(humidity_sensor).state);
       if (id(target_selector) == 0) {
-        it.printf(0, 16, id(myfont), "%s, %.1f hrs", id(dryer_mode_select).state.c_str(), hours_left);
+        it.printf(0, 16, id(myfont), "%s, %.1f hrs", id(dryer_mode_select).current_option().c_str(), hours_left);
       } else if (id(blink_state)) {
         if (id(target_selector) == 1) it.printf(0, 16, id(myfont), "Temp: %.1f °C", id(target_temp).state);
         else if (id(target_selector) == 2) it.printf(0, 16, id(myfont), "Time: %.1f hrs", hours_left);
@@ -197,7 +197,7 @@ binary_sensor:
     on_press:
       then:
         - lambda: |-
-            std::string current_mode = id(dryer_mode_select).state;
+            auto current_mode = id(dryer_mode_select).current_option();
             std::string next_mode;
 
             if (current_mode == "Idle") next_mode = "PLA";
@@ -292,7 +292,7 @@ script:
     mode: single
     then:
       - lambda: |-
-          auto mode = id(dryer_mode_select).state;
+          auto mode = id(dryer_mode_select).current_option();
           if (mode == "Idle") {
             id(heater_switch).turn_off();
             id(fan_switch).turn_off();
@@ -336,7 +336,7 @@ interval:
     then:
       - if:
           condition:
-            lambda: 'return id(dryer_mode_select).state != "Idle" && id(target_time).state > 0;'
+            lambda: 'return id(dryer_mode_select).current_option() != "Idle" && id(target_time).state > 0;'
           then:
             - if:
                 condition:

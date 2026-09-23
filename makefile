@@ -27,7 +27,7 @@ build: ## Build the firmware
 	# Dynamically get the correct build path from ESPHome
 	BUILD_DIR=$$(find .esphome/build/ -maxdepth 1 -type d | grep -v "^.esphome/build/$$" | head -n 1); \
 	echo "Detected build directory: $$BUILD_DIR"; \
-	cp $$BUILD_DIR/.pioenvs/*/firmware.factory.bin firmware.bin
+	cp $$BUILD_DIR/build/firmware.factory.bin firmware.bin
 
 flash: ## Flash the firmware to test device
 	source .venv/bin/activate && \
