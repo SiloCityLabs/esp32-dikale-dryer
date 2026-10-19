@@ -6,6 +6,6 @@
 
 .esphome
 .venv
-firmware.bin
+*.bin
 
 checklist.odt

@@ -1,0 +1,43 @@
+name: ESPHome Stable Compatibility
+
+on:
+  schedule:
+    # Weekly on Thursday at 11:00 UTC (6 AM EST / 7 AM EDT)
+    - cron: '0 11 * * 4'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-and-compile:
+    name: ESPHome Stable - Dikale Dryer (ESP32-C3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Pull latest ESPHome Stable
+        run: docker pull ghcr.io/esphome/esphome:stable
+
+      - name: Show ESPHome version
+        run: |
+          docker run --rm ghcr.io/esphome/esphome:stable version
+
+      - name: Validate configuration
+        run: |
+          docker run --rm \
+            -v "$PWD:/config" \
+            -w /config \
+            ghcr.io/esphome/esphome:stable \
+            config config.yaml
+
+      - name: Compile firmware
+        run: |
+          docker run --rm \
+            -v "$PWD:/config" \
+            -w /config \
+            ghcr.io/esphome/esphome:stable \
+            compile config.yaml
